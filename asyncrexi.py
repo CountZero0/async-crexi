@@ -47,16 +47,18 @@ async def get_properties_urls():
 
     async with aiohttp.ClientSession() as session:
         tasks = []
-        while json_data['offset'] < 1500:
+        while True:
             response = await session.post('https://api.crexi.com/assets/search', headers=headers, json=json_data)
             properties_json = await response.json()
-            for home in properties_json['Data']:
-                url = f'https://api.crexi.com/assets/{str(home["Id"])}'
-                task = asyncio.create_task(get_property_data(session, url))
-                tasks.append(task)
-
-            json_data['offset'] += 100
-            await asyncio.gather(*tasks)
+            if 'Data' in properties_json:
+                for home in properties_json['Data']:
+                    url = f'https://api.crexi.com/assets/{str(home["Id"])}'
+                    task = asyncio.create_task(get_property_data(session, url))
+                    tasks.append(task)
+                json_data['offset'] += 100
+                await asyncio.gather(*tasks)
+            else:
+                break
 
 
 async def get_property_data(session, url):
